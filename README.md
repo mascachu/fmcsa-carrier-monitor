@@ -115,133 +115,68 @@ The unit tests cover key normalization and field-level diff detection. They do n
 * Add integration tests, load tests, replay tests, dead-letter review, secret management, HTTPS, backups, and observability.
 * Compare sampled carrier changes against FMCSA Licensing \& Insurance and documented authoritative data before issuing business-critical alerts.
 
-\## Docker Verification and Synthetic Demo
-
-
+## Docker Verification and Synthetic Demo
 
 The Docker deployment was verified locally using Docker Compose and a PostgreSQL container.
 
+### Verified checks
 
+- Docker API container starts successfully.
+- PostgreSQL container reports healthy status.
+- `GET /health` returns HTTP 200 with service status `ok`.
+- `GET /sources` returns the configured FMCSA daily-difference dataset identifiers.
+- Synthetic demo records match the configured test watchlist.
+- The first synthetic demo run creates two change events.
+- Re-running the same demo creates zero additional duplicate events.
+- `GET /events` returns the two stored demo events.
+- A synthetic run-history record can be retrieved through `GET /runs`.
+- Automated test suite: **10 passed** in the Docker container.
+- Zoho synchronization and task creation remain disabled during the demo.
 
-\### Verified checks
-
-
-
-\- Docker API container starts successfully.
-
-\- PostgreSQL container reports healthy status.
-
-\- `GET /health` returns HTTP 200 with service status `ok`.
-
-\- `GET /sources` returns the configured FMCSA daily-difference dataset identifiers.
-
-\- Synthetic demo records match the configured test watchlist.
-
-\- The first synthetic demo run creates two change events.
-
-\- Re-running the same demo creates zero additional duplicate events.
-
-\- `GET /events` returns the two stored demo events.
-
-\- A synthetic run-history record can be retrieved through `GET /runs`.
-
-\- Automated test suite: \*\*10 passed\*\* in the Docker container.
-
-\- Zoho synchronization and task creation remain disabled during the demo.
-
-
-
-\### Run the synthetic demo
-
-
+### Run the synthetic demo
 
 Ensure Docker Compose services are running, then execute from the project root:
 
-
-
 ```bash
-
 docker compose up -d --build
-
-docker compose exec api python -m scripts.run\_demo
-
+docker compose exec api python -m scripts.run_demo
 ```
 
-
-
-The demo uses synthetic carrier records from `data/sample/demo\_carrier\_rows.json` and the test watchlist in `data/sample/demo\_watchlist.csv`.
-
-
+The demo uses synthetic carrier records from `data/sample/demo_carrier_rows.json` and the test watchlist in `data/sample/demo_watchlist.csv`.
 
 Import the demo watchlist into the Docker database before running the demo if it has not already been imported:
 
-
-
 ```bash
-
-docker compose exec -T api python -c "import csv; from app.repository import import\_watchlist; rows=list(csv.DictReader(open('/app/data/sample/demo\_watchlist.csv', newline='', encoding='utf-8'))); print('Imported companies:', import\_watchlist(rows))"
-
+docker compose exec -T api python -c "import csv; from app.repository import import_watchlist; rows=list(csv.DictReader(open('/app/data/sample/demo_watchlist.csv', newline='', encoding='utf-8'))); print('Imported companies:', import_watchlist(rows))"
 ```
-
-
 
 Expected behavior on the first run: two watchlist matches and two new events. On subsequent runs with unchanged demo data, no additional duplicate events should be created.
 
-
-
 The synthetic demo does not call the live FMCSA API or Zoho CRM.
 
-
-
-\### Run automated tests in Docker
-
-
+### Run automated tests in Docker
 
 ```bash
-
 docker compose exec api python -m pytest -q
-
 ```
-
-
 
 The verified result for this project version was:
 
-
-
 ```text
-
 10 passed
-
 ```
 
-
-
-\### Inspect the API
-
-
+### Inspect the API
 
 With the containers running, open:
 
-
-
-\- Health check: http://127.0.0.1:8000/health
-
-\- Interactive API documentation: http://127.0.0.1:8000/docs
-
-\- Recent events: http://127.0.0.1:8000/events
-
-\- Run history: http://127.0.0.1:8000/runs
-
-
+- Health check: http://127.0.0.1:8000/health
+- Interactive API documentation: http://127.0.0.1:8000/docs
+- Recent events: http://127.0.0.1:8000/events
+- Run history: http://127.0.0.1:8000/runs
 
 The recorded `docker-demo-run-20261026` entry is a synthetic test record, not a live FMCSA ingestion run.
 
-
-
-\### Verification scope
-
-
+### Verification scope
 
 These checks verify the local Docker deployment, database connectivity, synthetic event processing, duplicate prevention, API endpoints, and unit tests. They do not establish that live FMCSA ingestion, production-scale performance, scheduled n8n execution, or Zoho CRM delivery has been fully integration-tested.
-
