@@ -1,0 +1,20 @@
+[
+  {
+    "docket_number": "MC000123456",
+    "usdot_number": "9999001",
+    "op_auth_type": "Common",
+    "op_auth_status": "Inactive",
+    "bipd_file": "N",
+    "legal_name": "Example Carrier One LLC",
+    "source_note": "SYNTHETIC DEMO DATA - not a real carrier record"
+  },
+  {
+    "docket_number": "MC000234567",
+    "usdot_number": "9999002",
+    "op_auth_type": "Broker",
+    "op_auth_status": "Active",
+    "bipd_file": "Y",
+    "legal_name": "Example Carrier Two LLC",
+    "source_note": "SYNTHETIC DEMO DATA - not a real carrier record"
+  }
+]

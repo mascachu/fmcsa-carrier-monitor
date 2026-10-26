@@ -1,0 +1,50 @@
+{
+  "name": "FMCSA Daily Change Monitor (Prototype)",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 7 * * *"}]}},
+      "id": "schedule-fmcsa-daily",
+      "name": "Daily at 7:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/run/daily",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "X-Run-Token", "value": "REPLACE_WITH_FMCSA_RUN_TOKEN"}]},
+        "options": {"timeout": 300000}
+      },
+      "id": "call-fmcsa-api",
+      "name": "Run FMCSA ingestion and change detection",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"}, "conditions": [{"id": "has-errors", "leftValue": "={{$json.errors_count}}", "rightValue": 0, "operator": {"type": "number", "operation": "gt"}}], "combinator": "and"}},
+      "id": "check-monitor-errors",
+      "name": "Errors reported?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [780, 300]
+    },
+    {
+      "parameters": {"content": "Attach your chosen notification node here after configuring a secure destination. Do not send secrets or full carrier datasets in alerts.", "height": 120, "width": 260},
+      "id": "notification-note",
+      "name": "Notification setup note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1060, 460]
+    }
+  ],
+  "connections": {
+    "Daily at 7:00 AM": {"main": [[{"node": "Run FMCSA ingestion and change detection", "type": "main", "index": 0}]]},
+    "Run FMCSA ingestion and change detection": {"main": [[{"node": "Errors reported?", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1", "timezone": "America/New_York"},
+  "versionId": "1"
+}
