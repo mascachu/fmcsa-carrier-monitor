@@ -117,6 +117,8 @@ The unit tests cover key normalization and field-level diff detection. They do n
 
 ## Docker Verification and Synthetic Demo
 
+![FMCSA API documentation](fmcsa-api-documentation.png)
+
 The Docker deployment was verified locally using Docker Compose and a PostgreSQL container.
 
 ### Verified checks
