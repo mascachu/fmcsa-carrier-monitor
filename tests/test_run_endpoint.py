@@ -72,6 +72,12 @@ def test_run_daily_marks_failed_if_report_writing_fails(monkeypatch):
     )
     monkeypatch.setattr(main, "daily_run_lock", fake_lock)
     monkeypatch.setattr(main, "start_run", lambda run_key: 999)
+
+    @contextmanager
+    def fake_connect():
+        yield None
+
+    monkeypatch.setattr(main, "connect", fake_connect)
     monkeypatch.setattr(
         main.FMCSAClient,
         "fetch_daily_datasets",
@@ -117,3 +123,56 @@ def test_run_daily_marks_failed_if_report_writing_fails(monkeypatch):
     assert len(finish_calls) == 1
     assert finish_calls[0]["status"] == "failed"
     assert "Report generation failed" in finish_calls[0]["errors"][0]
+
+
+def test_auth_check_rejects_missing_token():
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+    response = client.get("/auth-check")
+
+    assert response.status_code == 401
+
+
+def test_auth_check_rejects_invalid_token(monkeypatch):
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app import main
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(
+        main,
+        "settings",
+        SimpleNamespace(run_token="test-secret-token"),
+    )
+
+    client = TestClient(app)
+    response = client.get(
+        "/auth-check",
+        headers={"X-Run-Token": "wrong-token"},
+    )
+
+    assert response.status_code == 401
+
+
+def test_auth_check_accepts_valid_token(monkeypatch):
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app import main
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(
+        main,
+        "settings",
+        SimpleNamespace(run_token="test-secret-token"),
+    )
+
+    client = TestClient(app)
+    response = client.get(
+        "/auth-check",
+        headers={"X-Run-Token": "test-secret-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["authentication"] == "valid"

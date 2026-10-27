@@ -111,6 +111,7 @@ def event_type_and_summary(
     return event_type, summary, severity
 
 
+
 def event_date_or_none(row: dict[str, Any]) -> date | None:
     r = normalized_row(row)
 
@@ -122,11 +123,27 @@ def event_date_or_none(row: dict[str, Any]) -> date | None:
         "effective_date",
     ):
         value = r.get(key)
-        if value:
+        if not value:
+            continue
+
+        text_value = str(value).strip()
+
+        # Parse FMCSA YYYYMMDD format, e.g. 20261026.
+        if len(text_value) == 8 and text_value.isdigit():
             try:
-                return date.fromisoformat(str(value)[:10])
+                return date(
+                    int(text_value[:4]),
+                    int(text_value[4:6]),
+                    int(text_value[6:8]),
+                )
             except ValueError:
                 continue
+
+        # Parse ISO format, e.g. 2026-10-26.
+        try:
+            return date.fromisoformat(text_value[:10])
+        except ValueError:
+            continue
 
     return None
 

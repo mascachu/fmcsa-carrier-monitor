@@ -28,6 +28,22 @@ def startup() -> None:
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "fmcsa-monitor", "version": "0.1.0"}
 
+@app.get("/auth-check")
+def auth_check(
+    x_run_token: str | None = Header(default=None),
+) -> dict[str, str]:
+    if (
+        not settings.run_token
+        or not x_run_token
+        or not secrets.compare_digest(settings.run_token, x_run_token)
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or missing X-Run-Token",
+        )
+
+    return {"status": "ok", "authentication": "valid"}
+
 @app.get("/sources")
 def sources() -> dict[str, Any]:
     return {"daily_difference_sources": FMCSA_DAILY_DATASETS, "note": "Confirm current source schemas and data dictionaries before production use."}

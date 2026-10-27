@@ -4,11 +4,11 @@
 
 ## Overview
 
-The FMCSA Daily Change Monitor is a portfolio prototype designed to track changes in motor carrier records, match records against a watchlist, maintain event history, and support future alerting workflows.
+The FMCSA Daily Change Monitor is a portfolio prototype designed to track changes in motor carrier records, match records against a watchlist, maintain event history, and prepare for future alerting workflows.
 
-The project demonstrates API development, database integration, duplicate prevention, automated testing, and workflow orchestration concepts.
+The project demonstrates API development, database integration, duplicate prevention, automated testing, workflow orchestration, and monitoring concepts.
 
-**Project status:** Local prototype verified with synthetic data. Live ingestion and end-to-end scheduled automation remain to be validated.
+**Project status:** Local prototype verified with synthetic data. End-to-end live ingestion and scheduled live automation remain unverified.
 
 ## The Problem
 
@@ -18,17 +18,19 @@ This prototype explores how a repeatable monitoring workflow could identify rele
 
 ## The Solution
 
-I built a containerized application using Python, FastAPI, and PostgreSQL, with a synthetic-data demo and an n8n workflow scaffold.
+A containerized application built with Python, FastAPI, and PostgreSQL, supported by synthetic test data and an n8n workflow scaffold.
 
 ## Features
 
-- **Watchlist matching:** Match test carrier records using USDOT and MC identifiers.
+- **Watchlist matching:** Match carrier records using USDOT and MC identifiers.
 - **Change-event tracking:** Store carrier-change events in PostgreSQL.
-- **Duplicate prevention:** Avoid creating duplicate events when unchanged synthetic records are processed again.
+- **Duplicate prevention:** Avoid creating duplicate events when unchanged records are processed again.
 - **Run history:** Record execution status, row counts, created-event counts, and errors.
 - **API endpoints:** Expose health, source configuration, event history, and run history.
 - **Automated tests:** Validate application behavior.
-- **Workflow extensibility:** Include an n8n scaffold and optional Zoho CRM integration configuration.
+- **Workflow monitoring:** Demonstrate API health, event, and run-history checks through n8n.
+- **Optional CRM integration:** Zoho CRM synchronization and task creation are disabled by default.
+- **Human-review concept:** Demonstrate a review step before operational action.
 
 ## Architecture
 
@@ -41,28 +43,49 @@ I built a containerized application using Python, FastAPI, and PostgreSQL, with 
 
 ## Verified Results
 
-The local Docker environment was verified using synthetic carrier records.
+The local environment and synthetic demonstration were tested. The latest local automated test run completed successfully.
 
 | Check | Result |
 |---|---|
-| Automated test suite | 15 passed |
-| Synthetic records processed | 2 |
-| Watchlist matches | 2 |
-| Existing demo events retrieved | 2 |
-| New events on repeated demo runs | 0 |
-| Run-history status | `completed` |
-| Errors in recorded demo run | 0 |
-| Live FMCSA API called during demo | No |
-| Zoho sync called during demo | No |
+| Local automated test suite | 20 passed |
+| Synthetic carrier rows | 2 |
+| Watchlist matches in the recorded demo | 2 |
+| Existing synthetic demo events retrieved | 2 |
+| New events on repeated unchanged demo runs | 0 |
+| Recorded demo run status | `completed` |
+| Errors in the recorded demo run | 0 |
+| Live FMCSA ingestion during the synthetic demo | Not performed |
+| Zoho CRM synchronization during the demo | Not performed |
 
-The repeated demo produced no additional events, consistent with the expected duplicate-prevention behavior. The run-history endpoint returned a completed synthetic run with two matched rows and no errors.
+The repeated synthetic demo created no additional duplicate events. The recorded run history showed two matched rows and no errors.
+
+These results describe the synthetic demonstration, not a live FMCSA monitoring run.
+
+## FMCSA Dataset Configuration
+
+The configured dataset identifiers are:
+
+| Source | Dataset ID |
+|---|---|
+| Motus Carrier | `nakq-58th` |
+| Motus Insurance History | `xe5s-wca7` |
+| Motus Authority History | `dm5j-zc6c` |
+| Motus Insurance | `x96h-evps` |
+| Motus Revoke/Suspend | `e67p-xyd5` |
+
+These identifiers have been checked against the official Socrata API. Configuring dataset identifiers and performing read-only source checks do not establish that complete live ingestion or production event processing has been verified.
 
 ## Run the Synthetic Demo
 
-Ensure Docker Compose services are running, then execute from the project root:
+From the project root, start the Docker Compose services:
 
 ```bash
 docker compose up -d --build
+```
+
+Run the synthetic demo:
+
+```bash
 docker compose exec api python -m scripts.run_demo
 ```
 
@@ -74,59 +97,88 @@ If the demo watchlist has not yet been imported into the Docker database, run:
 docker compose exec -T api python -c "import csv; from app.repository import import_watchlist; rows=list(csv.DictReader(open('/app/data/sample/demo_watchlist.csv', newline='', encoding='utf-8'))); print('Imported companies:', import_watchlist(rows))"
 ```
 
-Expected behavior on the first run: two watchlist matches and two new events. On subsequent runs with unchanged demo data, no additional duplicate events should be created.
+Expected behavior for a fresh synthetic dataset is two watchlist matches and two new events. Re-running unchanged demo data should not create duplicate events.
 
-The synthetic demo does not call the live FMCSA API or Zoho CRM.
+**Important:** The synthetic demo does not call the live FMCSA API or Zoho CRM.
 
 ## Run Automated Tests
+
+Run the test suite locally:
+
+```bash
+py -3.13 -m pytest -q
+```
+
+The latest local test result was **20 passed**.
+
+To run tests inside the Docker API container, use:
 
 ```bash
 docker compose exec api python -m pytest -q
 ```
 
-Verified result:
-
-```text
-15 passed
-```
+The Docker test result should be verified separately if the container does not contain the latest local code.
 
 ## Inspect the API
 
-With the containers running, open:
+With the services running, open:
 
-- Health check: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
-- Interactive API documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- Recent events: [http://127.0.0.1:8000/events](http://127.0.0.1:8000/events)
-- Run history: [http://127.0.0.1:8000/runs](http://127.0.0.1:8000/runs)
+- Health check: http://127.0.0.1:8000/health
+- Interactive API documentation: http://127.0.0.1:8000/docs
+- Recent events: http://127.0.0.1:8000/events
+- Run history: http://127.0.0.1:8000/runs
+- Configured sources: http://127.0.0.1:8000/sources
 
-The recorded `docker-demo-run-20261026` entry is a synthetic test record, not a live FMCSA ingestion run.
+The `docker-demo-run-20261026` entry is a synthetic test record, not a live FMCSA ingestion run.
+
+## n8n Workflow
+
+The workflow is named **FMCSA Daily Change Monitor — Portfolio Demo**.
+
+The verified demonstration path is:
+
+`Schedule Trigger → Demo Test Data → IF → Demo Review Result → Demo Run Log → API Health Check → Events Monitoring Check → Runs Monitoring Check`
+
+The synthetic review path and API monitoring checks have executed successfully.
+
+The schedule is configured for daily execution at 7:00 AM in the Asia/Manila timezone. The workflow remains inactive so the prototype does not run automatically before live ingestion and the required configuration are verified.
+
+The separate `Live FMCSA Ingestion - Manual Test` node is intentionally unconnected and has not been executed.
+
+## Authentication Check
+
+The API includes an `/auth-check` endpoint for validating the `X-Run-Token` header. The automated tests cover requests with missing, invalid, and valid tokens.
+
+Protected endpoint authentication and the corresponding automated tests do not, by themselves, establish that every operational workflow has been security-reviewed for production use.
+
+## Zoho CRM Integration
+
+Zoho CRM synchronization and task creation are disabled. Delivery of CRM updates and tasks has not been integration-tested.
 
 ## Technology Stack
 
-- Python
+- Python 3.13
 - FastAPI
 - PostgreSQL
 - Docker Compose
 - pytest
-- n8n workflow scaffold
+- n8n
 - FMCSA public dataset configuration
+- Optional Zoho CRM integration
 
-## Safety and Scope
+## Verification Scope and Limitations
 
-The current verification covers the local Docker environment, database connectivity, synthetic record processing, watchlist matching, event history, duplicate prevention, API endpoints, and automated tests.
+Verified checks cover the local application and database setup, synthetic event processing, watchlist matching, duplicate prevention, API endpoints, automated tests, and the n8n demonstration and monitoring path.
 
-The prototype does not yet establish end-to-end live FMCSA ingestion, production-scale reliability, scheduled n8n execution, or Zoho CRM delivery. The n8n HTTP Request node is not connected to the synthetic demo path. CRM synchronization and task creation remain disabled.
+The following remain unverified:
 
-This project is a portfolio prototype and is not presented as a production-ready monitoring service.
+- End-to-end live FMCSA ingestion and processing of current source records
+- Production watchlist matching using real carrier data
+- Scheduled n8n execution against the live ingestion endpoint
+- Zoho CRM synchronization and task delivery
+- Production-scale performance, alert reliability, and operational recovery
 
-## What I Learned
-
-- Designing APIs around a persistent relational database
-- Testing event-processing and duplicate-prevention behavior
-- Tracking execution history for observability
-- Managing local services using Docker Compose
-- Documenting verification evidence and limitations
-- Separating a safe synthetic demo from future live integrations
+This project is a portfolio prototype. It demonstrates the application structure, synthetic event-processing behavior, monitoring endpoints, authentication checks, and human-review workflow. It is not presented as a production-ready monitoring service.
 
 ## Next Steps
 
