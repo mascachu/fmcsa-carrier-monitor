@@ -145,9 +145,9 @@ The schedule is configured for daily execution at 7:00 AM in the Asia/Manila tim
 
 The separate `Live FMCSA Ingestion - Manual Test` node is intentionally unconnected and has not been executed.
 
-### n8n Workflow
+### n8n Workflow Screenshot
 
-![FMCSA n8n workflow](docs/screenshots/n8n-workflow.png)
+![FMCSA n8n workflow](docs/n8n-workflow.png)
 
 The screenshot shows the workflow structure used in this FMCSA monitoring portfolio prototype.
 
