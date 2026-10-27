@@ -197,3 +197,24 @@ This project is a portfolio prototype. It demonstrates the application structure
 ## Repository
 
 [FMCSA Daily Change Monitor on GitHub](https://github.com/mascachu/fmcsa-carrier-monitor)
+
+## Synthetic Change-Detection Demo
+
+A controlled synthetic test changed a watchlisted carrier's operating-authority status from `Inactive` to `Active`.
+
+| Check | Result |
+|---|---|
+| Synthetic record processed | 1 |
+| Watchlist matches | 1 |
+| Status field changed | `op_auth_status` |
+| New change event created | 1 |
+| Event retrieved through `GET /events` | Confirmed |
+| Event severity | High |
+| Live FMCSA API called by demo | No |
+| Zoho CRM sync called by demo | No |
+
+The created event was stored in PostgreSQL and returned by the event-history API. Its summary identified `op_auth_status` as the changed field.
+
+Evidence file: [`docs/evidence/synthetic-change-events.json`](docs/evidence/synthetic-change-events.json).
+
+This is a synthetic demonstration of the existing processing pipeline, not evidence of a live FMCSA carrier change. The demo temporarily overrides baseline mode within its own Python process; the normal API configuration remains unchanged.
