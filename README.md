@@ -145,6 +145,12 @@ The schedule is configured for daily execution at 7:00 AM in the Asia/Manila tim
 
 The separate `Live FMCSA Ingestion - Manual Test` node is intentionally unconnected and has not been executed.
 
+### n8n Workflow
+
+![FMCSA n8n workflow](docs/screenshots/n8n-workflow.png)
+
+The screenshot shows the workflow structure used in this FMCSA monitoring portfolio prototype.
+
 ## Authentication Check
 
 The API includes an `/auth-check` endpoint for validating the `X-Run-Token` header. The automated tests cover requests with missing, invalid, and valid tokens.
