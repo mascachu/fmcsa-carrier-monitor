@@ -75,3 +75,145 @@ def test_insert_event_duplicate_is_not_created():
     assert created is False
     assert event_id == 42
     assert conn.execute.call_count == 2
+
+def test_baseline_mode_does_not_emit_events(monkeypatch):
+    from unittest.mock import MagicMock
+    from dataclasses import replace
+    import app.processor as processor
+
+    monkeypatch.setattr(
+        processor,
+        "settings",
+        replace(processor.settings, baseline_mode=True),
+    )
+
+    conn = MagicMock()
+    conn.transaction.return_value.__enter__.return_value = None
+
+    monkeypatch.setattr(processor, "get_snapshot", lambda *args: None)
+    monkeypatch.setattr(processor, "find_companies", lambda *args: [{"id": 1}])
+
+    snapshot_mock = MagicMock()
+    monkeypatch.setattr(processor, "upsert_snapshot", snapshot_mock)
+
+    insert_event_mock = MagicMock()
+    monkeypatch.setattr(processor, "insert_event", insert_event_mock)
+
+    result = processor.process_record(
+        conn,
+        "motus_carrier",
+        {
+            "usdot_number": "9999001",
+            "docket_number": "MC000123456",
+            "legal_name": "Example Carrier One LLC",
+            "op_auth_status": "Active",
+        },
+    )
+
+    assert result["matched_companies"] == 1
+    assert result["events_created"] == 0
+    insert_event_mock.assert_not_called()
+    snapshot_mock.assert_called_once()
+
+
+def test_unchanged_record_does_not_create_duplicate_event(monkeypatch):
+    from unittest.mock import MagicMock
+    import app.processor as processor
+
+    row = {
+        "usdot_number": "9999001",
+        "docket_number": "MC000123456",
+        "legal_name": "Example Carrier One LLC",
+        "op_auth_status": "Active",
+    }
+
+    normalized = processor.normalized_row(row)
+
+    monkeypatch.setattr(
+        processor,
+        "settings",
+        __import__("dataclasses").replace(
+            processor.settings,
+            baseline_mode=False,
+        ),
+    )
+    monkeypatch.setattr(
+        processor,
+        "get_snapshot",
+        lambda *args: {"payload": normalized},
+    )
+    monkeypatch.setattr(
+        processor,
+        "find_companies",
+        lambda *args: [{"id": 1}],
+    )
+
+    upsert_mock = MagicMock()
+    monkeypatch.setattr(processor, "upsert_snapshot", upsert_mock)
+
+    insert_mock = MagicMock()
+    monkeypatch.setattr(processor, "insert_event", insert_mock)
+
+    result = processor.process_record(
+        MagicMock(),
+        "motus_carrier",
+        row,
+    )
+
+    assert result["matched_companies"] == 1
+    assert result["events_created"] == 0
+    insert_mock.assert_not_called()
+    upsert_mock.assert_called_once()
+
+
+def test_changed_carrier_status_creates_high_severity_event(monkeypatch):
+    from dataclasses import replace
+    from unittest.mock import MagicMock
+    import app.processor as processor
+
+    old_row = {
+        "usdot_number": "9999001",
+        "docket_number": "MC000123456",
+        "legal_name": "Example Carrier One LLC",
+        "op_auth_status": "Active",
+        "bipd_file": "Y",
+    }
+    new_row = {
+        **old_row,
+        "op_auth_status": "Inactive",
+        "bipd_file": "N",
+    }
+
+    monkeypatch.setattr(
+        processor,
+        "settings",
+        replace(processor.settings, baseline_mode=False),
+    )
+    monkeypatch.setattr(
+        processor,
+        "get_snapshot",
+        lambda *args: {"payload": old_row},
+    )
+    monkeypatch.setattr(
+        processor,
+        "find_companies",
+        lambda *args: [{"id": 1}],
+    )
+    monkeypatch.setattr(
+        processor,
+        "insert_event",
+        lambda *args: (True, 101),
+    )
+
+    snapshot_mock = MagicMock()
+    monkeypatch.setattr(processor, "upsert_snapshot", snapshot_mock)
+
+    result = processor.process_record(
+        MagicMock(),
+        "motus_carrier",
+        new_row,
+    )
+
+    assert result["matched_companies"] == 1
+    assert result["events_created"] == 1
+    snapshot_mock.assert_called_once()

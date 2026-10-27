@@ -9,6 +9,7 @@ class Settings:
     database_url: str = os.getenv("DATABASE_URL", "postgresql://fmcsa_app:change-me@localhost:5432/fmcsa_monitor")
     run_token: str = os.getenv("FMCSA_RUN_TOKEN", "")
     socrata_app_token: str = os.getenv("SOCRATA_APP_TOKEN", "")
+    baseline_mode: bool = os.getenv("FMCSA_BASELINE_MODE", "false").lower() == "true"
     zoho_sync_enabled: bool = os.getenv("ZOHO_SYNC_ENABLED", "false").lower() == "true"
     zoho_accounts_url: str = os.getenv("ZOHO_ACCOUNTS_URL", "https://accounts.zoho.com")
     zoho_api_base: str = os.getenv("ZOHO_API_BASE", "https://www.zohoapis.com")

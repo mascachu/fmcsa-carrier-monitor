@@ -1,4 +1,6 @@
 from __future__ import annotations
+from contextlib import contextmanager
+from collections.abc import Iterator
 import json
 from pathlib import Path
 from typing import Any
@@ -45,7 +47,7 @@ def import_watchlist(rows: list[dict[str, Any]]) -> int:
                     conn.execute(
                         """INSERT INTO monitored_company_identifiers (company_id, identifier_type, identifier_value)
                            VALUES (%s,%s,%s)
-                           ON CONFLICT (identifier_type, identifier_value) DO UPDATE SET company_id=EXCLUDED.company_id""",
+                           ON CONFLICT (identifier_type, identifier_value) DO NOTHING""",
                         (company_id, typ, value),
                     )
             count += 1
@@ -165,3 +167,31 @@ def list_runs(limit: int = 50) -> list[dict[str, Any]]:
                LIMIT %s""",
             (min(max(limit, 1), 200),),
         ).fetchall()
+
+
+
+@contextmanager
+def daily_run_lock() -> Iterator[bool]:
+    lock_conn = connect()
+    acquired = False
+
+    try:
+        result = lock_conn.execute(
+            "SELECT pg_try_advisory_lock(%s) AS acquired",
+            (726184205,),
+        ).fetchone()
+
+        acquired = result["acquired"]
+        yield acquired
+
+    finally:
+        if acquired:
+            try:
+                lock_conn.execute(
+                    "SELECT pg_advisory_unlock(%s)",
+                    (726184205,),
+                )
+            finally:
+                lock_conn.close()
+        else:
+            lock_conn.close()

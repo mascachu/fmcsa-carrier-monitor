@@ -2,7 +2,7 @@
 
 A staged proof-of-concept for an FMCSA carrier insurance/authority monitoring system. It uses Python + FastAPI, PostgreSQL history, official FMCSA daily-difference feeds published through the U.S. DOT Open Data Portal, an n8n schedule trigger, and an optional Zoho CRM upsert integration.
 
-> \*\*Status:\*\* starter prototype, not production-ready. No live company database, Zoho credentials, or hosting account is included. The sample watchlist values are synthetic. Validate current dataset schemas, source timing, and business rules before enabling real alerts.
+> \\\*\\\*Status:\\\*\\\* starter prototype, not production-ready. No live company database, Zoho credentials, or hosting account is included. The sample watchlist values are synthetic. Validate current dataset schemas, source timing, and business rules before enabling real alerts.
 
 ## Architecture
 
@@ -11,7 +11,7 @@ A staged proof-of-concept for an FMCSA carrier insurance/authority monitoring sy
 3. **PostgreSQL:** keep a watchlist, latest source snapshots, immutable change-event ledger, run summaries, and delivery attempts.
 4. **Matching:** compare normalized USDOT and MC/docket identifiers against indexed watchlist columns.
 5. **Duplicate prevention:** deterministic SHA-256 event keys plus a PostgreSQL unique constraint prevent the same source event from creating multiple event records. Production send logic should use an idempotent Zoho custom-module upsert, too.
-6. **n8n:** daily Schedule Trigger calls the protected API endpoint. Import `n8n/fmcsa\_daily\_monitor.json`, then set the schedule and token to match the deployment.
+6. **n8n:** daily Schedule Trigger calls the protected API endpoint. Import `n8n/fmcsa\\\_daily\\\_monitor.json`, then set the schedule and token to match the deployment.
 7. **Zoho CRM:** optional custom-module upsert is disabled by default. Configure and test module fields before enabling.
 8. **Report:** each run writes JSON and CSV summaries under `reports/`.
 
@@ -34,7 +34,7 @@ FMCSA says its active operating-authority data now uses the modern MOTUS schema 
 
 1. Install Docker Desktop.
 2. Copy `.env.example` to `.env`.
-3. Set a strong `POSTGRES\_PASSWORD` and a long random `FMCSA\_RUN\_TOKEN`. Keep `.env` private.
+3. Set a strong `POSTGRES\\\_PASSWORD` and a long random `FMCSA\\\_RUN\\\_TOKEN`. Keep `.env` private.
 4. Start services:
 
 ```bash
@@ -42,17 +42,17 @@ FMCSA says its active operating-authority data now uses the modern MOTUS schema 
    ```
 
 5. Check health: `http://localhost:8000/health`.
-6. Import your **authorized** watchlist CSV (columns: `company\_name,usdot\_number,mc\_number,zoho\_account\_id`). Sample rows are fake. From a shell inside the API container:
+6. Import your **authorized** watchlist CSV (columns: `company\\\_name,usdot\\\_number,mc\\\_number,zoho\\\_account\\\_id`). Sample rows are fake. From a shell inside the API container:
 
 ```bash
-   docker compose exec api python -m app.import\_watchlist /app/data/watchlist.example.csv
+   docker compose exec api python -m app.import\\\_watchlist /app/data/watchlist.example.csv
    ```
 
 7. Run a daily ingestion test manually (this does call public FMCSA data; Zoho is still off):
 
 ```bash
-   curl -X POST http://localhost:8000/run/daily \\
-     -H 'X-Run-Token: YOUR\_FMCSA\_RUN\_TOKEN'
+   curl -X POST http://localhost:8000/run/daily \\\\
+     -H 'X-Run-Token: YOUR\\\_FMCSA\\\_RUN\\\_TOKEN'
    ```
 
 8. See latest detected events: `http://localhost:8000/events`.
@@ -73,26 +73,38 @@ These mappings are a starting point. Confirm source field definitions, blank-str
 
 ## Zoho setup (optional; disabled by default)
 
-Before enabling `ZOHO\_SYNC\_ENABLED=true`, create a custom module (API name default `FMCSA\_Alerts`) with these API field names, and mark `Event\_Key` as a unique field:
+Before enabling `ZOHO\\\_SYNC\\\_ENABLED=true`, create a custom module (API name default `FMCSA\\\_Alerts`) with these API field names, and mark `Event\\\_Key` as a unique field:
 
 * `Name` (standard name field)
-* `Event\_Key` (unique text)
-* `USDOT\_Number` (text)
-* `MC\_Number` (text)
-* `Event\_Type` (picklist or text)
-* `Event\_Date` (date or text, based on target CRM setup)
+* `Event\\\_Key` (unique text)
+* `USDOT\\\_Number` (text)
+* `MC\\\_Number` (text)
+* `Event\\\_Type` (picklist or text)
+* `Event\\\_Date` (date or text, based on target CRM setup)
 * `Description` (multi-line text)
 * `Severity` (picklist/text)
 
-Configure OAuth refresh-token credentials and correct regional Zoho API/accounts domains. Start in a Zoho sandbox/test org. Validate the custom module upsert response and failure handling before production. The provided integration supports custom-module alert upsert. Optional high-severity follow-up Tasks are disabled by default; to enable them, configure `ZOHO\_TASKS\_ENABLED=true` and create a unique custom field on the Tasks module matching `ZOHO\_TASK\_EVENT\_KEY\_FIELD\_API\_NAME` (default `FMCSA\_Event\_Key`). Task upsert/account association must be tested in the client's Zoho sandbox, and dashboards still require field/report configuration in the target CRM org. Failed Zoho deliveries are retried on subsequent daily runs up to three recorded attempts.
+Configure OAuth refresh-token credentials and correct regional Zoho API/accounts domains. Start in a Zoho sandbox/test org. Validate the custom module upsert response and failure handling before production. The provided integration supports custom-module alert upsert. Optional high-severity follow-up Tasks are disabled by default; to enable them, configure `ZOHO\\\_TASKS\\\_ENABLED=true` and create a unique custom field on the Tasks module matching `ZOHO\\\_TASK\\\_EVENT\\\_KEY\\\_FIELD\\\_API\\\_NAME` (default `FMCSA\\\_Event\\\_Key`). Task upsert/account association must be tested in the client's Zoho sandbox, and dashboards still require field/report configuration in the target CRM org. Failed Zoho deliveries are retried on subsequent daily runs up to three recorded attempts.
 
-## n8n setup
+## n8n Setup and Current Demo Status
 
-1. Import `n8n/fmcsa\_daily\_monitor.json`.
-2. Replace `REPLACE\_WITH\_FMCSA\_RUN\_TOKEN` with the same secret stored in `.env`.
-3. If n8n is not in the same Docker network as the API, replace `http://api:8000` with a reachable private API URL secured by HTTPS.
-4. Confirm the timezone and schedule. The sample uses `America/New\_York` at 07:00 local time because the source data is U.S.-based; verify the client's operational cutoff before activation.
-5. Keep the workflow **inactive** until sample runs and failure paths have been reviewed.
+n8n is configured locally through Docker Compose and is available at `http://127.0.0.1:5678`.
+
+### Current workflow
+
+- A Schedule Trigger is configured for 7:00 AM in the `Asia/Manila` timezone.
+- Demo data is passed through an IF node to check whether `approval_status` equals `pending_review`.
+- The true and false branches produce separate review-result values.
+- The HTTP Request node targeting `http://api:8000/run/daily` is currently disconnected from the demo branches.
+
+### Safety and limitations
+
+- The workflow is intended for portfolio demonstration and has not been confirmed as a complete scheduled ingestion workflow.
+- The workflow should remain unpublished and unexecuted until the watchlist, API authentication, and execution paths have been reviewed.
+- The demo branch uses synthetic data and does not call the live FMCSA API.
+- Zoho CRM synchronization and task creation remain disabled.
+- Before activation, connect and test the intended API path safely, verify the run token without exposing it, and review error handling and duplicate prevention.
+
 
 ## Tests
 
@@ -145,7 +157,7 @@ The Docker deployment was verified locally using Docker Compose and a PostgreSQL
 
 \- A synthetic run-history record can be retrieved through `GET /runs`.
 
-\- Automated test suite: \*\*10 passed\*\* in the Docker container.
+\- Automated test suite: \*\*15 passed\*\* in the Docker container.
 
 \- Zoho synchronization and task creation remain disabled during the demo.
 
@@ -163,13 +175,13 @@ Ensure Docker Compose services are running, then execute from the project root:
 
 docker compose up -d --build
 
-docker compose exec api python -m scripts.run\_demo
+docker compose exec api python -m scripts.run\\\_demo
 
 ```
 
 
 
-The demo uses synthetic carrier records from `data/sample/demo\_carrier\_rows.json` and the test watchlist in `data/sample/demo\_watchlist.csv`.
+The demo uses synthetic carrier records from `data/sample/demo\\\_carrier\\\_rows.json` and the test watchlist in `data/sample/demo\\\_watchlist.csv`.
 
 
 
@@ -179,7 +191,7 @@ Import the demo watchlist into the Docker database before running the demo if it
 
 ```bash
 
-docker compose exec -T api python -c "import csv; from app.repository import import\_watchlist; rows=list(csv.DictReader(open('/app/data/sample/demo\_watchlist.csv', newline='', encoding='utf-8'))); print('Imported companies:', import\_watchlist(rows))"
+docker compose exec -T api python -c "import csv; from app.repository import import\\\_watchlist; rows=list(csv.DictReader(open('/app/data/sample/demo\\\_watchlist.csv', newline='', encoding='utf-8'))); print('Imported companies:', import\\\_watchlist(rows))"
 
 ```
 
@@ -211,7 +223,7 @@ The verified result for this project version was:
 
 ```text
 
-10 passed
+15 passed
 
 ```
 

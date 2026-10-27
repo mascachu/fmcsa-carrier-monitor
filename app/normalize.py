@@ -56,7 +56,7 @@ def row_identifiers(source_name: str, record: dict[str, Any]) -> tuple[str | Non
     elif source_name == "motus_insur":
         parts = [usdot, docket, row.get("policy_no"), row.get("effective_date"), row.get("trans_date"), row.get("ins_form_code")]
     elif source_name == "motus_revokesuspend":
-        parts = [usdot, docket, row.get("op_auth_type"), row.get("order1_effective_date"), row.get("order1_serve_date"), row.get("reason")]
+        parts = [usdot, docket, row.get("op_auth_type"), row.get("order1_type_desc"), row.get("order1_effective_date"), row.get("order1_serve_date")]
     else:
         parts = [usdot, docket, sha256_text(stable_json(row))]
 

@@ -1,3 +1,4 @@
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -28,5 +29,17 @@ services:
       - ./reports:/app/reports
       - ./data:/app/data:ro
 
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=Asia/Manila
+      - TZ=Asia/Manila
+    volumes:
+      - n8n_data:/home/node/.n8n
+
 volumes:
   pgdata:
+  n8n_data:
