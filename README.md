@@ -218,3 +218,50 @@ The created event was stored in PostgreSQL and returned by the event-history API
 Evidence file: [`docs/evidence/synthetic-change-events.json`](docs/evidence/synthetic-change-events.json).
 
 This is a synthetic demonstration of the existing processing pipeline, not evidence of a live FMCSA carrier change. The demo temporarily overrides baseline mode within its own Python process; the normal API configuration remains unchanged.
+
+## n8n Workflow — Portfolio Demo
+
+### Overview
+
+The n8n workflow demonstrates a scheduled automation flow with a human-review status, PostgreSQL run logging, and separate success and error paths.
+
+### Workflow Structure
+
+**Demo path**
+
+`Schedule Trigger → Demo Test Data → IF → Demo Review Result → Demo Run Log → Insert rows in a table`
+
+**Success path**
+
+`Insert rows in a table → Confirm Successful Run`
+
+**Error path**
+
+`Insert rows in a table → Prepare Failure Log → Mark Run as Failed`
+
+### Database Validation
+
+A synthetic demo run was successfully inserted into the PostgreSQL `daily_runs` table.
+
+- Run key: `n8n-demo-56`
+- Status: `completed`
+- Rows matched: `1`
+- Events created: `0`
+- Report path: `n8n-portfolio-demo`
+
+### Error Handling Status
+
+The error path prepares an error message and stops the execution with an error so the failed execution can be reviewed in n8n's execution history.
+
+**Limitation:** The error path has not yet been tested end-to-end. Failure details are not independently persisted to the database by this path. A database outage may also prevent database-based error logging.
+
+### Safety and Scope
+
+- Uses synthetic demo data for the n8n portfolio path.
+- Live FMCSA ingestion is not part of this demo execution.
+- Zoho CRM synchronization and task creation remain disabled.
+- The workflow remains inactive until further testing and review.
+
+### Current Status
+
+The successful PostgreSQL insert has been verified. Error handling is configured but still requires a controlled test before it can be considered fully validated.
