@@ -125,7 +125,7 @@ With the local FastAPI server running on port 8081, open:
 
 - Health check: http://127.0.0.1:8081/health
 - Authentication check: http://127.0.0.1:8081/auth-check
-Interactive API documentation: http://127.0.0.1:8081/docs
+- Interactive API documentation: http://127.0.0.1:8081/docs
 - Recent events: http://127.0.0.1:8081/events
 - Run history: http://127.0.0.1:8081/runs
 - Configured sources: http://127.0.0.1:8081/sources
