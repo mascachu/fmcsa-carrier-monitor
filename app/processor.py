@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 from datetime import date
@@ -111,7 +112,6 @@ def event_type_and_summary(
     return event_type, summary, severity
 
 
-
 def event_date_or_none(row: dict[str, Any]) -> date | None:
     r = normalized_row(row)
 
@@ -128,7 +128,6 @@ def event_date_or_none(row: dict[str, Any]) -> date | None:
 
         text_value = str(value).strip()
 
-        # Parse FMCSA YYYYMMDD format, e.g. 20261026.
         if len(text_value) == 8 and text_value.isdigit():
             try:
                 return date(
@@ -139,7 +138,6 @@ def event_date_or_none(row: dict[str, Any]) -> date | None:
             except ValueError:
                 continue
 
-        # Parse ISO format, e.g. 2026-10-26.
         try:
             return date.fromisoformat(text_value[:10])
         except ValueError:
@@ -168,7 +166,8 @@ def process_record(
         if matched_companies:
             should_emit = (
                 not settings.baseline_mode
-                and (old_payload is None or bool(changes))
+                and old_payload is not None
+                and bool(changes)
             )
 
             if should_emit:
