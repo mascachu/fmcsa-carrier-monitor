@@ -124,7 +124,7 @@ The Docker test result should be verified separately if the container does not c
 With the local FastAPI server running on port 8081, open:
 
 - Health check: http://127.0.0.1:8081/health
-- Authentication check: http://127.0.0.1:8081/auth-check
+- Authentication check endpoint (requires `X-Run-Token`): http://127.0.0.1:8081/auth-check
 - Interactive API documentation: http://127.0.0.1:8081/docs
 - Recent events: http://127.0.0.1:8081/events
 - Run history: http://127.0.0.1:8081/runs
