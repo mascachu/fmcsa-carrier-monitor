@@ -121,35 +121,45 @@ The Docker test result should be verified separately if the container does not c
 
 ## Inspect the API
 
-With the services running, open:
+With the local FastAPI server running on port 8081, open:
 
-- Health check: http://127.0.0.1:8000/health
-- Interactive API documentation: http://127.0.0.1:8000/docs
-- Recent events: http://127.0.0.1:8000/events
-- Run history: http://127.0.0.1:8000/runs
-- Configured sources: http://127.0.0.1:8000/sources
+- Health check: http://127.0.0.1:8081/health
+- Authentication check: http://127.0.0.1:8081/auth-check
+Interactive API documentation: http://127.0.0.1:8081/docs
+- Recent events: http://127.0.0.1:8081/events
+- Run history: http://127.0.0.1:8081/runs
+- Configured sources: http://127.0.0.1:8081/sources
 
 The `docker-demo-run-20261026` entry is a synthetic test record, not a live FMCSA ingestion run.
 
+
+For n8n running inside Docker Desktop, use the Windows-host API address: `http://host.docker.internal:8081`.
+
 ## n8n Workflow
 
-The workflow is named **FMCSA Daily Change Monitor — Portfolio Demo**.
+The workflow is named **FMCSA Daily Change Monitor — Demo**.
 
-The verified demonstration path is:
+The verified synthetic demonstration path is:
 
-`Schedule Trigger → Demo Test Data → IF → Demo Review Result → Demo Run Log → API Health Check → Events Monitoring Check → Runs Monitoring Check`
+Schedule Trigger → Demo Test Data → IF → Demo Review Result → Demo Run Log
 
-The synthetic review path and API monitoring checks have executed successfully.
+The following monitoring nodes were tested separately through manual execution:
 
-The schedule is configured for daily execution at 7:00 AM in the Asia/Manila timezone. The workflow remains inactive so the prototype does not run automatically before live ingestion and the required configuration are verified.
+- API Health Check
+- API Auth Check
+- Daily Endpoint Test
+- Events Monitoring Check
+- Runs Monitoring Check
+- PostgreSQL connection check
 
-The separate `Live FMCSA Ingestion - Manual Test` node is intentionally unconnected and has not been executed.
+The API health, authentication, source configuration, event history, run history, and PostgreSQL connection checks completed successfully.
 
-### n8n Workflow Screenshot
+The separate **Live FMCSA Ingestion - Manual Test** node is configured but intentionally remains unconnected and has not been executed.
 
-![FMCSA n8n workflow](docs/n8n-workflow.png)
+A separate **FMCSA Error Notifications** workflow uses an Error Trigger connected to a Gmail notification action. It is assigned as the main workflow's error workflow. Actual email delivery has not yet been independently verified.
 
-The screenshot shows the workflow structure used in this FMCSA monitoring portfolio prototype.
+The main workflow remains inactive pending live-ingestion validation and final configuration review.
+
 
 ## Authentication Check
 
@@ -223,45 +233,47 @@ This is a synthetic demonstration of the existing processing pipeline, not evide
 
 ### Overview
 
-The n8n workflow demonstrates a scheduled automation flow with a human-review status, PostgreSQL run logging, and separate success and error paths.
+The n8n prototype includes a synthetic demonstration workflow, separately tested monitoring nodes, and a separate error-notification workflow.
 
-### Workflow Structure
+### Verified Demo Path
 
-**Demo path**
+`Schedule Trigger → Demo Test Data → IF → Demo Review Result → Demo Run Log`
 
-`Schedule Trigger → Demo Test Data → IF → Demo Review Result → Demo Run Log → Insert rows in a table`
+The main workflow is currently inactive. Its schedule is configured for 7:00 AM Asia/Manila time but has not been activated for scheduled operation.
 
-**Success path**
+### Monitoring Checks
 
-`Insert rows in a table → Confirm Successful Run`
+The following checks were executed separately and completed successfully:
 
-**Error path**
+- API health check
+- API authentication check
+- Configured FMCSA source check
+- Event-history check
+- Run-history check
+- PostgreSQL connection check
 
-`Insert rows in a table → Prepare Failure Log → Mark Run as Failed`
+These monitoring nodes are not connected to the synthetic demo path.
 
-### Database Validation
+### Live Ingestion Safety
 
-A synthetic demo run was successfully inserted into the PostgreSQL `daily_runs` table.
+The `Live FMCSA Ingestion - Manual Test` node is configured but remains disconnected and has not been executed through n8n.
 
-- Run key: `n8n-demo-56`
-- Status: `completed`
-- Rows matched: `1`
-- Events created: `0`
-- Report path: `n8n-portfolio-demo`
+Live ingestion must be validated separately before scheduled automation is enabled.
 
-### Error Handling Status
+### Error Notifications
 
-The error path prepares an error message and stops the execution with an error so the failed execution can be reviewed in n8n's execution history.
+The separate `FMCSA Error Notifications` workflow connects an Error Trigger to a Gmail notification action. It is assigned as the main workflow's error workflow.
 
-**Limitation:** The error path has not yet been tested end-to-end. Failure details are not independently persisted to the database by this path. A database outage may also prevent database-based error logging.
+Actual email delivery has not yet been independently verified. The error-notification workflow has not been validated through a controlled real failure.
 
 ### Safety and Scope
 
-- Uses synthetic demo data for the n8n portfolio path.
-- Live FMCSA ingestion is not part of this demo execution.
+- The n8n demo path uses synthetic data.
+- Monitoring checks were tested separately.
+- Live FMCSA ingestion through n8n has not been performed.
 - Zoho CRM synchronization and task creation remain disabled.
-- The workflow remains inactive until further testing and review.
+- The main workflow remains inactive pending further testing and review.
 
 ### Current Status
 
-The successful PostgreSQL insert has been verified. Error handling is configured but still requires a controlled test before it can be considered fully validated.
+The synthetic demo path, monitoring endpoints, and PostgreSQL connection have been verified. Scheduled live ingestion and end-to-end error email delivery remain unverified.
